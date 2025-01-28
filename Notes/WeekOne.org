@@ -1,0 +1,72 @@
+* Lecture 1 Intro and Preliminaries [2025-1-23 Thu]
+    ** Assembly Language
+        - is a bunch of letters, numbers, and symbols that represent different things. each are mnemonics of bits and hexadecimal to make things
+        readable
+        - ex. add, sub
+        - symbolic names help for processor registers and memory locations
+    
+    ** Types
+        - structs are the same as classes
+        - 3 is an int, 3.1415 is a double literal and 3.1414f is a float literal
+
+* Lecture 2 C++ Basics [2025-1-27 Mon]
+    ** Main Functions
+        - every program must have a function main
+        - ex. int main(void){} <-- returns int but no params
+        - for main functions, the only valid return type is int return 0;
+        - EXIT_SUCCESS is 0 and EXIT_FAILURE is non-zero so when we return 0 it means the function ran
+
+    ** Function Syntax
+        - function definition: <return type> <funcname> (<params>){<body>}
+        - function declaration: <return type> <funcname> (<params>); <-- function declaration comes before function definition
+
+    ** Printing out
+        - printing things out: count << "" << endl
+        - when printing make sure to include iostream and use the using keyword to include std::count and std::endl
+        - ex. void foo(void) {
+                cout << "Hello, World!" << endl
+                return 0;
+              }
+        - foo(); <-- function invocation (function call)
+
+    ** Preprocessor
+        - preprocessor macros are used to include code from other files 
+        - processes a program before the program is compiled 
+        - ex. #include #define
+
+        - C++ relys on including files like header files which are associated with library implementations
+        - this is to make sure all programs have common definitions like variables, constants, functions, etc.
+
+    ** Namespace
+        - the standard library includes objects. this namespace is labeled std
+        - :: means in
+        - format: namespace::objects
+        - in C++ you can also create namespaces to make your own library of objects
+    
+    ** iostream
+        - standard library that provides definitions and implementations for input and output streams
+        - this is similar to Java System.in and System.out
+        - cin: object for input stream
+        - cout: object for output stream connected to standard out
+        - cerr: object for output stream connected to standard err
+        - << to write and >> to read
+        - endl: end of the line to be written
+
+        -ex. code to write out an integer: int x; cout << x; 
+
+    ** Strings
+        - strings are mutable unlike python and java
+        - not necessarily null terminated
+        - .length() to check for length
+        - .append() to append or += "";
+        - s2 = s1 to assign (makes a seperate copy)
+        - use [] to access individual characters: s1[0]; (has no range checking)
+        - .at(index) has range checking <-- returns the character at given index
+        - .substr() for substrings
+        - .find(s2) searches for the first occurence of a substring in another string
+        - .copy(ptr, N, index) copies N characters into the array ptr starting at index... needs to be null terminated
+        - .c_str() returns const char * (constant char pointer)... null terminated
+
+
+
+        
