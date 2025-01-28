@@ -12,6 +12,6 @@ int main(void){
         }
     }
     string firstname = input.substr(0, input.find(" "));
-    cout << "Hello " + firstname + ", Welcome to CS 280 Section " + section;
+    cout << "Hello " + firstname + ", Welcome to CS 280 Section " + section + ".";
 }
 
