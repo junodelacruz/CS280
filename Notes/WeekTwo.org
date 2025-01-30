@@ -1,0 +1,34 @@
+* Lecture 3 Streams and Files [2025-1-30 Thu]
+    ** >> Operator
+        - input or extraction operator
+        - is left associative (left to right readability)
+        - reads but doesnt store white space characters 
+        - ctrl-z forcibly terminates file and ctrl-d indicates end of file and thus stopping the program 
+        - getline() reads the entire line instead of separating based on whitespace. stops when it reaches a "\n"
+        - type istream
+        - << is type ostream
+
+    ** Some functions in C++
+        - .get() function is used to read the next character from the input stream without skipping any leading whitespace characters
+        - .ignore(x, y) is used to skip up to x amount of characters or until y chars from the input stream 
+        - .put() displays a single character on the output stream
+        - isdigit();
+        - isalpha();
+        - isalnum();
+        - isspace();
+
+   ** Disk Files for I/O
+        - fin and fout: file input and file output
+        - ifstream fin("main.cc"); and ofstream fout("copy of main.cc") to delcare 
+        - .eof() returns 1 (true) if EOF (end of file) has occurred
+        - how to use i/o: access #include <fstream>, choose indentifiers for filestreams and declare, open files and associate them with disk
+          names, use file stream indentifiers with >> and <<, and finally close
+        - .open() and .close()
+        - when a stream fails further I/O operations have no effect. computer does not automatically halt or give an error
+        - reasons why stream can fail: invalid inputs, opening a file that doesnt exist, end of file is reached, opening an output file on a
+          disk that is write-protected or already full
+        - methods to check for errors: good(), eof(), fail(), bad()
+
+    ** String Stream Processing
+        - istringstream(from) and ostringstream(to) can be used to extract or format data from or to strings
+        - not used all the time, only in specific scenariosCLOCK: [2025-1-30 Thu 11:13][2025-1-30 Thu]
