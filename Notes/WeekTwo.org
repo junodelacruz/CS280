@@ -32,3 +32,29 @@
     ** String Stream Processing
         - istringstream(from) and ostringstream(to) can be used to extract or format data from or to strings
         - not used all the time, only in specific scenariosCLOCK: [2025-1-30 Thu 11:13][2025-1-30 Thu]
+
+* Lecture 4 Functions, Pointers, and Arrays [2025-2-3 Mon]
+  ** Functions
+    - basic function declaration: return_type function_name(parameter declarations);
+    - you can include functions in your code by using include keyword. however, the function you are including needs to have a declaration file with
+      ending in .h <-- header file
+    - can also include .cpp files directly
+    - function definition is a function delcaration that are often called prototypes
+    - pass-by-value: normally implemented by copying (default and only pass method) in c++ you cannot swap two integers, it only swaps copies 
+      of them (pointers).
+    - pass-by-reference: achieved by using pointers as parameters or using a special pointer type known as a reference type, but must pass in the
+      address
+    - swap is easier by using references as their parameters (use & for reference)
+
+  ** Pointers
+    - declared using * in front of the variable name (dereferencing operator)
+    - dereferencing gives the value stored at the location represented by the pointers value
+
+  ** References
+    - similar to a constant pointer
+    - references in C++ must be initialized when declared
+
+  ** Arrays
+    - an array is a pointer to an allocated block of memory
+    - can't copy arrays 
+    - arrays do not have bounds checking
