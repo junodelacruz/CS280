@@ -58,3 +58,7 @@
     - an array is a pointer to an allocated block of memory
     - can't copy arrays 
     - arrays do not have bounds checking
+
+  ** Recursive Solutions
+    - base case and general case
+    - 

@@ -1,0 +1,103 @@
+* Lecture 5 Structures and Classes [2025-2-6 Thu]
+    ** Structures
+    - structs are easier than classes 
+    - to inherit from a class we use derived keyword ex. derived : base
+    - everything in the struct by default are public, but you can make instance variables private
+    - in classes the things are private
+    - when we inherit using derived things become private
+    - ex:
+        ~ code for a stack (not completed look at slides for more)
+            template <typename E>
+            struct stack {
+                ~Stack(void) {
+                    delete [ stack;]
+                }
+
+                E pop(void) {
+                    if(top > 0) {
+                        return stack[--top];
+                    }
+                    throw "Empty stack";
+                }
+
+                void push(E data) {
+                    if (top < 10) {
+                        stack[top++];
+                    }
+                }
+
+            private; 
+                E *stack = new E[10];
+                int top = 0;
+            }
+            int main(void) {
+                Stack<int> stack;
+
+                for (int i = 0; i < 10; i++){
+                    stack.push(i);
+                }
+                try {
+                    while(1){
+                        cout << stack.pop() << endl;
+                    }
+                }
+                catch(...){
+                    cout << "empty" << endl;
+                    return 0;
+                }
+            }
+        ~
+    
+    ** Record Types
+        - a record is a possible heterogeneous aggregate of data elements in which the individual elements
+          are identified by names
+        - a union is like a struct but only one of the fields can be used at any given time
+        - a union is a different view of the same memory location
+        
+    ** Classes
+        - private clause for hidden entities (instance variables)
+        - public for interface entities
+        - protected clause for inheritence 
+        - destructors used to reclaim heap storage and deallocate arrays
+        - look at slides for examples of code
+        - ex. 
+        ~ code for a timer/clock
+            struct Time {
+                Time(int hours=0, int minutes=0, int seconds=0) : hours(hours), minutes(minutes), seconds(seconds) {
+
+                }
+                void printMil(void) {
+                    cout << hours << ":" << minutes << ":" << seconds << endl;
+                }
+            private:
+                int hours;
+                int minutes;
+                int seconds;
+            };
+            int main(void) {
+                Time now(10,49,00);
+                Time t1;
+                Time t2(1);
+                Time t3(1, 2);
+                Time t4(1,2,3);
+
+                //pointer, gives default constructor because no parameters (also dont need to put parenthesis)
+                Time *p = new Time();
+
+                now.printMil();
+
+                return 0;
+            }
+        ~
+        - in vectors, using .at() is better than using square brackets because .at() checks for out of bounds
+    
+    ** Initialization Classes
+        - refer to slides
+
+    ** Nested Classes
+        - refer to slides
+
+    ** Templates
+        - refer to slides
+
+    
