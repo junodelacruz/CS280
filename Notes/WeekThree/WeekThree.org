@@ -99,5 +99,3 @@
 
     ** Templates
         - refer to slides
-
-    
