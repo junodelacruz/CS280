@@ -91,22 +91,21 @@ int main(void)
     }
 
     // maps (similar to hashmaps or dictionaries)
-    map<int, string> m; //takes two parameters
-    m[1] == "one";
-    m[2] == "two";
+    map<int, string> m; // takes two parameters
+    // m[1] == "one";
+    // m[2] == "two";
 
     // cannot use this for maps
     // for(int i : m) {
     //     cout << m[i] << endl;
     // }
 
-    //iterator for maps
-    for(auto it = m.begin(); it != m.end(); it++){
-        cout << it -> first << ':' << it -> second << endl;
+    // iterator for maps
+    for (auto it = m.begin(); it != m.end(); it++)
+    {
+        cout << it->first << ':' << it->second << endl;
     }
-    //has to be called first and second for key and value pair
-
-    
+    // has to be called first and second for key and value pair
 
     return 0;
 }
