@@ -9,26 +9,22 @@
 
 using namespace std;
 
-int main(void)
+int main(int argc, char *argv[])
 {
-    string filename;
-    string command;
     bool kwFlag = false;
     bool spFlag = false;
     bool idFlag = false;
 
-    cin >> filename;
+    ifstream file(argv[1]);
 
-    ifstream file(filename + ".txt");
-
-    if (filename.empty())
+    if (argc == 1)
     {
         cout << "NO SPECIFIED INPUT FILE NAME." << endl;
         exit(1);
     }
     if (!file)
     {
-        cout << "CANNOT OPEN THE FILE " << filename << endl;
+        cout << "CANNOT OPEN THE FILE " << argv[1] << endl;
         exit(1);
     }
     if (file.peek() == EOF)
@@ -37,25 +33,21 @@ int main(void)
         exit(1);
     }
 
-    cin >> command;
-    if (command == "-kw")
+    for (int x = 1; x < argc; x++)
     {
-        kwFlag = true;
-    }
-    else if (command == "-sp")
-    {
-        spFlag = true;
-    }
-
-    else if (command == "-id")
-    {
-        idFlag = true;
-    }
-    else
-    {
-        kwFlag = true;
-        spFlag = true;
-        idFlag = true;
+        string argument = argv[x];
+        if (argument == "-kw")
+        {
+            kwFlag = true;
+        }
+        if (argument == "-sp")
+        {
+            spFlag = true;
+        }
+        if (argument == "-id")
+        {
+            idFlag = true;
+        }
     }
 
     int kw = 0;
@@ -63,21 +55,26 @@ int main(void)
     int spDolla = 0;
     int spAt = 0;
     int id = 0;
+    int total = 0;
     list<string> keywords = {"begin", "end", "if", "else", "while", "for", "break",
                              "continue", "case", "switch", "class", "public", "private", "abstract", "final"};
 
     string line;
+    int lineNum = 0;
     while (getline(file, line))
     {
+        lineNum++;
+
         stringstream ss(line);
         string word;
         transform(line.begin(), line.end(), line.begin(), ::tolower);
 
         regex spPattern("[$@%][a-zA-Z0-9_]*");
         regex idPattern("[a-zA-Z][a-zA-Z0-9]*");
-
+        
         while (ss >> word)
         {
+            total++;
             // cout << word << endl;
             bool found = find(keywords.begin(), keywords.end(), word) != keywords.end();
             if (regex_match(word, spPattern))
@@ -105,24 +102,32 @@ int main(void)
             }
             else
             {
-                //check if invalid special or ident
+                if (word.substr(0, 1) == "@" || word.substr(0, 1) == "%" || word.substr(0, 1) == "$")
+                {
+                    cout << "Invalid Special Word at line " << lineNum << ": " << word << endl;
+                }
+                else if (isalpha(word.at(0)) != 0)
+                {
+                    cout << "Invalid Identifier Word at line " << lineNum << ": " << word << endl;
+                }
             }
         }
     }
 
+    cout << "Total number of words: " << total << endl;
     if (kwFlag)
     {
-        cout << kw << endl;
+        cout << "Number of Keywords: " << kw << endl;
+    }
+    if (idFlag)
+    {
+        cout << "Number of Identifiers: " << id << endl;
     }
     if (spFlag)
     {
         cout << "Number of Special Words Starting With $: " << spDolla << endl;
         cout << "Number of Special Words Starting With @: " << spAt << endl;
         cout << "Number of Special Words Starting With %: " << spPercent << endl;
-    }
-    if (idFlag)
-    {
-        cout << id << endl;
     }
 
     return 0;

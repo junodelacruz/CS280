@@ -1,5 +1,23 @@
 {
     "files.exclude": {
       "**/*.exe": true
+  },
+  "files.associations": {
+    "*.embeddedhtml": "html",
+    "iostream": "cpp",
+    "*.tcc": "cpp",
+    "ostream": "cpp",
+    "array": "cpp",
+    "deque": "cpp",
+    "list": "cpp",
+    "string": "cpp",
+    "unordered_map": "cpp",
+    "vector": "cpp",
+    "string_view": "cpp",
+    "format": "cpp",
+    "initializer_list": "cpp",
+    "span": "cpp",
+    "text_encoding": "cpp",
+    "regex": "cpp"
   }
 }
