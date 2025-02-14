@@ -132,3 +132,5 @@ int main(int argc, char *argv[])
 
     return 0;
 }
+
+//need to fix 5 cases, fix identifier keyword and special, counting wrong and wrong regex perhaps
