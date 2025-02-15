@@ -33,9 +33,9 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    for (int x = 1; x < argc; x++)
+    for (int i = 1; i < argc; i++)
     {
-        string argument = argv[x];
+        string argument = argv[i];
         if (argument == "-kw")
         {
             kwFlag = true;
@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 
         regex spPattern("[$@%][a-zA-Z0-9_]*");
         regex idPattern("[a-zA-Z][a-zA-Z0-9]*");
-        
+
         while (ss >> word)
         {
             total++;
@@ -102,11 +102,11 @@ int main(int argc, char *argv[])
             }
             else
             {
-                if (word.substr(0, 1) == "@" || word.substr(0, 1) == "%" || word.substr(0, 1) == "$")
+                if (spFlag == true && (word.substr(0, 1) == "@" || word.substr(0, 1) == "%" || word.substr(0, 1) == "$"))
                 {
                     cout << "Invalid Special Word at line " << lineNum << ": " << word << endl;
                 }
-                else if (isalpha(word.at(0)) != 0)
+                else if (idFlag == true && isalpha(word.at(0)) != 0)
                 {
                     cout << "Invalid Identifier Word at line " << lineNum << ": " << word << endl;
                 }
@@ -132,5 +132,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-
-//need to fix 5 cases, fix identifier keyword and special, counting wrong and wrong regex perhaps
