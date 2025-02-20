@@ -62,9 +62,7 @@ int main(int argc, char *argv[])
     list<string> keywordsMatch = {"begin", "end", "if", "else", "while", "for", "break",
                              "continue", "case", "switch", "class", "public", "private", "abstract", "final"};
     
-    vector<string> dollar;
-    vector<string> percent;
-    vector<string> at;
+    
     vector<string> keyword;
 
     string line;
@@ -91,19 +89,16 @@ int main(int argc, char *argv[])
                 {
                     spPercent++;
                     sp++;
-                    percent.push_back(word);
                 }
                 else if (word.substr(0, 1) == "$")
                 {
                     spDolla++;
                     sp++;
-                    dollar.push_back(word);
                 }
                 else if (word.substr(0, 1) == "@")
                 {
                     spAt++;
                     sp++;
-                    at.push_back(word);
                 }
             }
             else if (found)
@@ -137,9 +132,6 @@ int main(int argc, char *argv[])
     if (spFlag)
     {
         cout << "List of Special Words and their number of occurences: " << endl;
-        cout << "$: " << spDolla << endl;
-        cout << "@: " << spAt << endl;
-        cout << "%: " << spPercent << endl;
     }
 
     return 0;
