@@ -70,6 +70,7 @@ int main(int argc, char *argv[])
 
     map<string, int> specialWords;
     map<string, int> keywords;
+    map<string, int> identifiers;
 
     string line;
     int lineNum = 0;
@@ -133,6 +134,14 @@ int main(int argc, char *argv[])
             else if (regex_match(originalWord, idPattern))
             {
                 id++;
+                if (identifiers.find(originalWord) != identifiers.end())
+                {
+                    identifiers[originalWord]++;
+                }
+                else
+                {
+                    identifiers[originalWord] = 1;
+                }
             }
             else
             {
@@ -163,12 +172,19 @@ int main(int argc, char *argv[])
     }
     if (kwFlag)
     {
-        cout << "List of Keywords and their number of occurrences:" << endl;
+        cout << endl << "List of Keywords and their number of occurrences:" << endl;
         for (auto i = keywords.begin(); i != keywords.end(); i++)
         {
             cout << i->first << ": " << i->second << endl;
         }
     }
-
+    if (idFlag)
+    {
+        cout << endl << "List of Identiers and their number of occurrences:" << endl;
+        for (auto i = identifiers.begin(); i != identifiers.end(); i++)
+        {
+            cout << i->first << ": " << i->second << endl;
+        }
+    }
     return 0;
 }
