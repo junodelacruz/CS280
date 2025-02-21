@@ -7,6 +7,7 @@
 #include <cctype>
 #include <regex>
 #include <vector>
+#include <map>
 
 using namespace std;
 
@@ -28,11 +29,6 @@ int main(int argc, char *argv[])
         cout << "CANNOT OPEN THE FILE " << argv[1] << endl;
         exit(1);
     }
-    if (file.peek() == EOF)
-    {
-        cout << "The File Is Empty." << endl;
-        exit(1);
-    }
 
     for (int i = 1; i < argc; i++)
     {
@@ -41,14 +37,24 @@ int main(int argc, char *argv[])
         {
             kwFlag = true;
         }
-        if (argument == "-sp")
+        else if (argument == "-sp")
         {
             spFlag = true;
         }
-        if (argument == "-id")
+        else if (argument == "-id")
         {
             idFlag = true;
         }
+        else if(i!=1)
+        {
+            cout << "UNRECOGNIZED FLAG " << argument << endl;
+            exit(1);
+        }
+    }
+    if (file.peek() == EOF)
+    {
+        cout << "File Is Empty." << endl;
+        exit(1);
     }
 
     int kw = 0;
@@ -60,10 +66,10 @@ int main(int argc, char *argv[])
     int sp = 0;
 
     list<string> keywordsMatch = {"begin", "end", "if", "else", "while", "for", "break",
-                             "continue", "case", "switch", "class", "public", "private", "abstract", "final"};
-    
-    
-    vector<string> keyword;
+                                  "continue", "case", "switch", "class", "public", "private", "abstract", "final"};
+
+    map<string, int> specialWords;
+    map<string, int> keywords;
 
     string line;
     int lineNum = 0;
@@ -73,7 +79,6 @@ int main(int argc, char *argv[])
 
         stringstream ss(line);
         string word;
-        transform(line.begin(), line.end(), line.begin(), ::tolower);
 
         regex spPattern("[$@%][a-zA-Z0-9_]*");
         regex idPattern("[a-zA-Z][a-zA-Z0-9]*");
@@ -82,31 +87,50 @@ int main(int argc, char *argv[])
         {
             total++;
             // cout << word << endl;
-            bool found = find(keywordsMatch.begin(), keywordsMatch.end(), word) != keywordsMatch.end();
-            if (regex_match(word, spPattern))
+            string originalWord = word;
+            transform(word.begin(), word.end(), word.begin(), ::tolower);
+            
+            bool findKw = find(keywordsMatch.begin(), keywordsMatch.end(), word) != keywordsMatch.end();
+            if (regex_match(originalWord, spPattern))
             {
-                if (word.substr(0, 1) == "%")
+                if (originalWord.substr(0, 1) == "%")
                 {
                     spPercent++;
                     sp++;
                 }
-                else if (word.substr(0, 1) == "$")
+                else if (originalWord.substr(0, 1) == "$")
                 {
                     spDolla++;
                     sp++;
                 }
-                else if (word.substr(0, 1) == "@")
+                else if (originalWord.substr(0, 1) == "@")
                 {
                     spAt++;
                     sp++;
                 }
+
+                if (specialWords.find(originalWord) != specialWords.end())
+                {
+                    specialWords[originalWord]++;
+                }
+                else
+                {
+                    specialWords[originalWord] = 1;
+                }
             }
-            else if (found)
+            else if (findKw)
             {
                 kw++;
-                keyword.push_back(word);
+                if (keywords.find(word) != keywords.end())
+                {
+                    keywords[word]++;
+                }
+                else
+                {
+                    keywords[word] = 1;
+                }
             }
-            else if (regex_match(word, idPattern))
+            else if (regex_match(originalWord, idPattern))
             {
                 id++;
             }
@@ -114,11 +138,11 @@ int main(int argc, char *argv[])
             {
                 if (spFlag == true && (word.substr(0, 1) == "@" || word.substr(0, 1) == "%" || word.substr(0, 1) == "$"))
                 {
-                    cout << "Invalid Special Word at line " << lineNum << ": " << word << endl;
+                    cout << "Invalid Special Word: " << word << endl;
                 }
                 else if (idFlag == true && isalpha(word.at(0)) != 0)
                 {
-                    cout << "Invalid Identifier Word at line " << lineNum << ": " << word << endl;
+                    cout << "Invalid Identifier Word: " << word << endl;
                 }
             }
         }
@@ -126,12 +150,24 @@ int main(int argc, char *argv[])
     cout << "Total Number of Lines: " << lineNum << endl;
     cout << "Number of Words: " << total << endl;
     cout << "Number of Special Words: " << sp << endl;
-    cout << "Number of Keywords: " << kw << endl;
     cout << "Number of Identifiers: " << id << endl;
+    cout << "Number of Keywords: " << kw << endl;
 
     if (spFlag)
     {
-        cout << "List of Special Words and their number of occurences: " << endl;
+        cout << endl << "List of Special Words and their number of occurrences:" << endl;
+        for (auto i = specialWords.begin(); i != specialWords.end(); i++)
+        {
+            cout << i->first << ": " << i->second << endl;
+        }
+    }
+    if (kwFlag)
+    {
+        cout << "List of Keywords and their number of occurrences:" << endl;
+        for (auto i = keywords.begin(); i != keywords.end(); i++)
+        {
+            cout << i->first << ": " << i->second << endl;
+        }
     }
 
     return 0;
