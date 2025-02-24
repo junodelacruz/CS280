@@ -4,12 +4,13 @@
 
 using namespace std;
 
-int main(void) {
+int main(void)
+{
     // char ch;
 
     // cin >> ch;
     // cin.putback(ch);
-    
+
     string s;
     cout << (char)cin.peek() << endl;
     cin >> s;
