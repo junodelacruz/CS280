@@ -1,5 +1,7 @@
 // Lecture 13 Midterm Review Examples [2025-3-6 Thu]
 
+// follow the slides with these notes:
+
 // imperative is the first programming language paradigm, giving the computer machine language (von neumann)
 // !file means error opening file
 // pointers in cpp store the memory address of values. arrow operator: pointer -> member (pointer points to an object and member is a member of the object)
