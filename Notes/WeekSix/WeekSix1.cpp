@@ -1,4 +1,4 @@
-// Lecture 11 Variables, Bindings, and Scopes [2025-2-27 Thu]
+// Lecture 11 and 12 Variables, Bindings, and Scopes [2025-2-27 Thu]
 #include <iostream>
 #include <string>
 
@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
     int *ip = new int(3);
     cout << &a << ' ' << &b << ' ' << ip << endl;
     // ----------------
-    string s;        // actual string object, in c++ string declaraions are the object itself, not a reference
+    string s;                  // actual string object, in c++ string declaraions are the object itself, not a reference
     string *sp = new string(); // a reference to string object, similar to how strings in java are defined as references
     cout << s.size();
     // ----------------
@@ -40,6 +40,6 @@ int main(int argc, char *argv[])
     // ----------------
     // we allocate when the function starts, at { and we deallocate the memory at the end of a function }
     // lifetime - execution time of variables
-    
+
     return 0;
 }
