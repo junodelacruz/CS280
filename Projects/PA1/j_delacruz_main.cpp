@@ -1,5 +1,7 @@
 #include <iostream>
 #include <fstream>
+#include <string>
+#include "lex.h"
 
 using namespace std;
 
@@ -32,22 +34,29 @@ int main(int argc, char *argv[])
             idFlag = true;
             kwFlag = true;
         }
-        else if (argument == "-str")
+        else if (argument.substr(0, 1) == "-")
         {
-            strFlag = true;
-        }
-        else if (argument == "-id")
-        {
-            idFlag = true;
-        }
-        else if (argument == "-kw")
-        {
-            kwFlag = true;
+            if (argument == "-str")
+            {
+                strFlag = true;
+            }
+            else if (argument == "-id")
+            {
+                idFlag = true;
+            }
+            else if (argument == "-kw")
+            {
+                kwFlag = true;
+            }
+            else
+            {
+                cout << "Unrecognized flag {" << argument << "}" << endl;
+                exit(1);
+            }
         }
         else if (i != 1)
         {
-            cout << "Unrecognized flag " << argument << endl;
-            exit(1);
+            cout << "Only one file name is allowed." << endl;
         }
     }
     if (file.peek() == EOF)
@@ -56,5 +65,9 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    if (numFlag || strFlag || idFlag || kwFlag)
+    {
+        return 0;
+    }
     return 0;
 }
