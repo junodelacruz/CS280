@@ -1,3 +1,7 @@
+
+
+// pa1 instead of returning an error switch the lexstate back to start
+
 #include "lex.h"
 
 LexItem getNextToken(istream &in, int &linenum)
@@ -42,7 +46,7 @@ LexItem getNextToken(istream &in, int &linenum)
             }
             break;
         case INID:
-            if (isalpha(ch) || ch == '_')
+            if (isalpha(ch) || ch == '_' || isdigit(ch))
             {
                 lexeme += ch;
             }
@@ -53,7 +57,11 @@ LexItem getNextToken(istream &in, int &linenum)
             break;
         case ININT:
             // ICONST
-            if (isdigit(ch)) // digit?
+            if (isspace(ch))
+            {
+                return LexItem(ICONST, lexeme, linenum);
+            }
+            else if (isdigit(ch)) // digit?
             {
                 lexeme += ch;
             }
@@ -92,12 +100,43 @@ LexItem getNextToken(istream &in, int &linenum)
             // FCONST
             else if (ch == '.')
             {
+                if (isdigit(in.peek()))
+                {
+                    lexeme += ch;
+                }
+                else
+                {
+                    return LexItem(ERR, lexeme, linenum);
+                }
             }
             else
             {
             }
             break;
         case INSTRING:
+            if (ch != '\'' || ch != '\"')
+            {
+                lexeme += ch;
+            }
+            else
+            {
+                lexeme += ch;
+                if (lexeme[0] == ch)
+                {
+                    if (lexeme.length() == 3)
+                    {
+                        return LexItem(CCONST, lexeme, linenum);
+                    }
+                    else
+                    {
+                        return LexItem(SCONST, lexeme, linenum);
+                    }
+                }
+                else
+                {
+                    return LexItem(ERR, lexeme, linenum);
+                }
+            }
             break;
         }
     }
