@@ -41,7 +41,7 @@ enum Token
     SCONST,
     BCONST,
     CCONST,
-    // the arithmetic operators, logic operators, relational operators
+    //  the arithmetic operators, logic operators, relational operators
     PLUS,
     MINUS,
     MULT,

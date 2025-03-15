@@ -1,7 +1,4 @@
 {
-    "files.exclude": {
-      "**/*.exe": true
-  },
   "files.associations": {
     "*.embeddedhtml": "html",
     "iostream": "cpp",
@@ -18,6 +15,8 @@
     "initializer_list": "cpp",
     "span": "cpp",
     "text_encoding": "cpp",
-    "regex": "cpp"
+    "regex": "cpp",
+    "iosfwd": "cpp",
+    "optional": "cpp"
   }
 }
