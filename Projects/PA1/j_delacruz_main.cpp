@@ -2,10 +2,20 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include <algorithm>
 #include "lex.h"
 
 using namespace std;
+
+void pushUniqueString(std::vector<string> &vec, string value, int &num)
+{
+    if (find(vec.begin(), vec.end(), value) == vec.end())
+    {
+        vec.push_back(value);
+        num++;
+    }
+}
 
 int main(int argc, char *argv[])
 {
@@ -81,38 +91,58 @@ int main(int argc, char *argv[])
     vector<string> numSet;
     vector<string> strSet;
     vector<string> idSet;
-    vector<LexItem> kwSet;
+    map<Token, string> kwSet;
     vector<LexItem> otherSet;
     vector<LexItem> allTokens;
 
-    vector<Token> keywords = {IF, ELSE, ELSIF, PUT, PUTLN, GET, INT, FLOAT, CHAR, STRING, BOOL, PROCEDURE, TRUE, FALSE, END, IS, BEGIN, THEN, CONST};
+    unordered_map<Token, string> keywords = {
+        {AND, "and"},
+        {IF, "if"},
+        {ELSE, "else"},
+        {ELSIF, "elsif"},
+        {PUT, "put"},
+        {PUTLN, "putln"},
+        {GET, "get"},
+        {INT, "int"},
+        {FLOAT, "float"},
+        {CHAR, "char"},
+        {STRING, "string"},
+        {BOOL, "bool"},
+        {PROCEDURE, "procedure"},
+        {TRUE, "true"},
+        {FALSE, "false"},
+        {END, "end"},
+        {IS, "is"},
+        {BEGIN, "begin"},
+        {THEN, "then"},
+        {CONST, "const"},
+        {MOD, "mod"},
+        {OR, "or"},
+        {NOT, "not"},
+    };
 
     while ((token = getNextToken(file, linenum)) != DONE)
     {
         totalTok++;
         if (token.GetToken() == ICONST || token.GetToken() == FCONST)
         {
-            numSet.push_back(token.GetLexeme());
+            pushUniqueString(numSet, token.GetLexeme(), totalNum);
             allTokens.push_back(token);
-            totalNum++;
         }
         else if (token.GetToken() == CCONST || token.GetToken() == SCONST)
         {
-            totalStr++;
+            pushUniqueString(strSet, token.GetLexeme(), totalStr);
             allTokens.push_back(token);
-            strSet.push_back(token.GetLexeme());
         }
         else if (token.GetToken() == IDENT)
         {
-            totalIden++;
+            pushUniqueString(idSet, token.GetLexeme(), totalIden);
             allTokens.push_back(token);
-            idSet.push_back(token.GetLexeme());
         }
-        else if (find(keywords.begin(), keywords.end(), token.GetToken()) != keywords.end())
+        else if (keywords.find(token.GetToken()) != keywords.end())
         {
-            totalKw++;
+            kwSet.insert({token.GetToken(), token.GetLexeme()});
             allTokens.push_back(token);
-            kwSet.push_back(token);
         }
         else
         {
@@ -121,6 +151,7 @@ int main(int argc, char *argv[])
         }
     }
     bool summary = true;
+    totalKw = kwSet.size();
     if (allFlag)
     {
         for (auto lexitem : allTokens)
@@ -136,33 +167,53 @@ int main(int argc, char *argv[])
     if (summary)
     {
         cout << endl;
-        cout << "Lines: " << linenum << endl
+        cout << "Lines: " << linenum - 1 << endl
              << "Total Tokens: " << totalTok << endl
              << "Numerals: " << totalNum << endl
-             << "Characters and Strings: " << totalStr << endl
+             << "Characters and Strings : " << totalStr << endl
              << "Identifiers: " << totalIden << endl
              << "Keywords: " << totalKw << endl;
     }
 
     sort(idSet.begin(), idSet.end());
+    sort(strSet.begin(), strSet.end());
 
-    if (numFlag && !allFlag)
+    vector<double> sortedNums;
+    for (auto elem : numSet)
     {
-        for (auto lexitem : numSet)
-        {
-            cout << lexitem << endl;
-        }
+        sortedNums.push_back(stod(elem));
     }
-    if (strFlag && !allFlag)
+    sort(sortedNums.begin(), sortedNums.end());
+
+    if (numFlag && summary)
     {
-        for (auto lexitem : strSet)
+        cout << "NUMERIC CONSTANTS:" << endl;
+        for (int i = 0; i < sortedNums.size(); i++)
         {
-            cout << lexitem << endl;
+            cout << sortedNums[i];
+            if (i != sortedNums.size() - 1)
+            {
+                cout << ", ";
+            }
         }
+        cout << endl;
     }
-    if (idFlag && !allFlag)
+    if (strFlag && summary)
     {
-        cout << "IDENTIFIERS: " << endl;
+        cout << "CHARACTERS AND STRINGS:" << endl;
+        for (int i = 0; i < strSet.size(); i++)
+        {
+            cout << '"' << strSet[i] << '"';
+            if (i != strSet.size() - 1)
+            {
+                cout << ", ";
+            }
+        }
+        cout << endl;
+    }
+    if (idFlag && summary)
+    {
+        cout << "IDENTIFIERS:" << endl;
         for (int i = 0; i < idSet.size(); i++)
         {
             cout << idSet[i];
@@ -171,22 +222,20 @@ int main(int argc, char *argv[])
                 cout << ", ";
             }
         }
+        cout << endl;
     }
-    if (kwFlag && !allFlag)
+    if (kwFlag && summary)
     {
-        cout << "KEYWORDS: " << endl;
-        for (int i = 0; i < kwSet.size(); i++)
+        cout << "KEYWORDS:" << endl;
+        for (auto elem = kwSet.begin(); elem != kwSet.end(); ++elem)
         {
-            cout << kwSet[i];
-            if (i != kwSet.size() - 1)
+            cout << elem->second;
+            if (std::next(elem) != kwSet.end())
             {
                 cout << ", ";
             }
         }
-    }
-    bool compareByToken(const LexItem &a, const LexItem &b)
-    {
-        return a.GetToken() < b.GetToken();
+        cout << endl;
     }
     return 0;
 }

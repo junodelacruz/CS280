@@ -84,7 +84,7 @@ LexItem getNextToken(istream &in, int &linenum)
                 }
                 else
                 {
-                    return LexItem(ERR, lexeme, linenum);
+                    return LexItem(COLON, lexeme, linenum);
                 }
             }
             else if (ch == '<')
@@ -158,9 +158,14 @@ LexItem getNextToken(istream &in, int &linenum)
             }
             else if (ch == '.')
             {
-                lexeme += ch;
-                lexstate = INFLOAT;
-                break;
+                if (isdigit(in.peek()))
+                {
+                    lexeme += ch;
+                    lexstate = INFLOAT;
+                    break;
+                }
+                in.unget();
+                return LexItem(ICONST, lexeme, linenum);
             }
             else if (ch == 'e' || ch == 'E') // E?
             {
@@ -191,6 +196,12 @@ LexItem getNextToken(istream &in, int &linenum)
                     }
                     return LexItem(ICONST, lexeme, linenum);
                 }
+                else if (isspace(in.peek()))
+                {
+                    in.unget();
+                    lexstate = START;
+                    break;
+                }
                 else
                 {
                     in.unget();
@@ -208,11 +219,6 @@ LexItem getNextToken(istream &in, int &linenum)
             if (isdigit(ch))
             {
                 lexeme += ch;
-            }
-            else if (ch == '.')
-            {
-                lexeme += ch;
-                return LexItem(ERR, lexeme, linenum);
             }
             else if (ch == 'e' || ch == 'E')
             {
@@ -243,11 +249,21 @@ LexItem getNextToken(istream &in, int &linenum)
                     }
                     return LexItem(FCONST, lexeme, linenum);
                 }
+                else if (isspace(in.peek()))
+                {
+                    in.unget();
+                    return LexItem(FCONST, lexeme, linenum);
+                }
                 else
                 {
                     in.unget();
                     return LexItem(FCONST, lexeme, linenum);
                 }
+            }
+            else if (ch == '.')
+            {
+                lexeme += ch;
+                return LexItem(ERR, lexeme, linenum);
             }
             else
             {
@@ -258,35 +274,47 @@ LexItem getNextToken(istream &in, int &linenum)
         case INSTRING:
             if (ch != '\n')
             {
+                if (lexeme.at(0) == '\'' && lexeme.length() > 2)
+                {
+                    return LexItem(ERR, " Invalid character constant " + lexeme + '\'', linenum);
+                }
+                if (ch == '"')
+                {
+                    if (lexeme.at(0) == '"')
+                    {
+                        lexeme.erase(remove(lexeme.begin(), lexeme.end(), '"'), lexeme.end());
+                        return LexItem(SCONST, lexeme, linenum);
+                    }
+                    else if (lexeme.at(0) == '\'')
+                    {
+                        return LexItem(ERR, " Invalid string constant " + lexeme + '"', linenum);
+                    }
+                    else
+                    {
+                        return LexItem(ERR, "New line is an invalid character constant.", linenum);
+                    }
+                }
+                else if (ch == '\'')
+                {
+                    if (lexeme.at(0) == '\'' && lexeme.length() == 2)
+                    {
+                        lexeme.erase(remove(lexeme.begin(), lexeme.end(), '\''), lexeme.end());
+                        return LexItem(CCONST, lexeme, linenum);
+                    }
+                    else if (lexeme.at(0) == '"')
+                    {
+                        return LexItem(ERR, " Invalid string constant " + lexeme + '\'', linenum);
+                    }
+                    else
+                    {
+                        return LexItem(ERR, "New line is an invalid character constant.", linenum);
+                    }
+                }
+                else if (in.peek() == '\n')
+                {
+                    return LexItem(ERR, " Invalid string constant " + lexeme + ' ', linenum);
+                }
                 lexeme += ch;
-            }
-            else
-            {
-                return LexItem(ERR, " Invalid string constant " + lexeme, linenum);
-            }
-            if (ch == '"')
-            {
-                if (lexeme.at(0) == '"')
-                {
-                    lexeme.erase(remove(lexeme.begin(), lexeme.end(), '"'), lexeme.end());
-                    return LexItem(SCONST, lexeme, linenum);
-                }
-                else
-                {
-                    return LexItem(ERR, " Invalid string constant " + lexeme, linenum);
-                }
-            }
-            if (ch == '\'')
-            {
-                if (lexeme.at(0) == '\'' && lexeme.length() == 2)
-                {
-                    lexeme.erase(remove(lexeme.begin(), lexeme.end(), '\''), lexeme.end());
-                    return LexItem(CCONST, lexeme, linenum);
-                }
-                else
-                {
-                    return LexItem(ERR, " Invalid string constant " + lexeme, linenum);
-                }
             }
             break;
         }

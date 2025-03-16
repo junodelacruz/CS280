@@ -17,6 +17,15 @@
     "text_encoding": "cpp",
     "regex": "cpp",
     "iosfwd": "cpp",
-    "optional": "cpp"
+    "optional": "cpp",
+    "unordered_set": "cpp",
+    "cwchar": "cpp",
+    "exception": "cpp",
+    "functional": "cpp",
+    "istream": "cpp",
+    "new": "cpp",
+    "stdexcept": "cpp",
+    "streambuf": "cpp",
+    "tuple": "cpp"
   }
 }
