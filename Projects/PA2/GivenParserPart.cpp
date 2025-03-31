@@ -52,6 +52,7 @@ void ParseError(int line, string msg)
 // Prog ::= PROCEDURE ProcName IS ProcBody
 bool Prog(istream &in, int &line)
 {
+
 	return true;
 }
 // End of Prog
