@@ -15,6 +15,7 @@ using namespace std;
 
 extern bool Prog(istream &in, int &line);
 extern bool ProcBody(istream &in, int &line);
+extern bool ProcName(istream &in, int &line);
 extern bool DeclPart(istream &in, int &line);
 extern bool DeclStmt(istream &in, int &line);
 extern bool Type(istream &in, int &line);

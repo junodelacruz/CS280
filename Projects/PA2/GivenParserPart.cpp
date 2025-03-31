@@ -52,6 +52,34 @@ void ParseError(int line, string msg)
 // Prog ::= PROCEDURE ProcName IS ProcBody
 bool Prog(istream &in, int &line)
 {
+	LexItem tok;
+
+	tok = Parser::GetNextToken(in, line);
+
+	if (tok.GetToken() != PROCEDURE)
+	{
+		ParseError(line, "Missing Procedure Name.");
+		return false;
+	}
+
+	if (!ProcName(in, line))
+	{
+		ParseError(line, "Error no procname");
+		return false;
+	}
+
+	tok = Parser::GetNextToken(in, line);
+	if (tok.GetToken() != IS)
+	{
+		ParseError(line, "Missing 'IS'");
+		return false;
+	}
+
+	if (!ProcBody(in, line))
+	{
+		ParseError(line, "Invalid procedure body");
+		return false;
+	}
 
 	return true;
 }
