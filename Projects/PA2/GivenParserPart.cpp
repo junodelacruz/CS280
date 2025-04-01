@@ -61,7 +61,6 @@ bool Prog(istream &in, int &line)
 		return false;
 	}
 
-	tok = Parser::GetNextToken(in, line);
 	if (!ProcName(in, line))
 	{
 		ParseError(line, "Error no procname");
@@ -75,7 +74,6 @@ bool Prog(istream &in, int &line)
 		return false;
 	}
 
-	tok = Parser::GetNextToken(in, line);
 	if (!ProcBody(in, line))
 	{
 		ParseError(line, "Invalid procedure body");
@@ -91,8 +89,7 @@ bool ProcBody(istream &in, int &line)
 {
 	LexItem tok;
 
-	tok = Parser::GetNextToken(in, line);
-	if (!DeclPart)
+	if (!DeclPart(in, line))
 	{
 		ParseError(line, "No DeclPart");
 		return false;
@@ -105,8 +102,7 @@ bool ProcBody(istream &in, int &line)
 		return false;
 	}
 
-	tok = Parser::GetNextToken(in, line);
-	if (!StmtList)
+	if (!StmtList(in, line))
 	{
 		ParseError(line, "No StmtList");
 		return false;
@@ -119,8 +115,7 @@ bool ProcBody(istream &in, int &line)
 		return false;
 	}
 
-	tok = Parser::GetNextToken(in, line);
-	if (!ProcName)
+	if (!ProcName(in, line))
 	{
 		ParseError(line, "No ProcName");
 		return false;
@@ -187,35 +182,37 @@ bool DeclStmt(istream &in, int &line)
 	LexItem tok;
 
 	tok = Parser::GetNextToken(in, line);
-	if (tok == IDENT)
-	{
-		tok = Parser::GetNextToken(in, line);
-		if (tok == COMMA)
-		{
-			DeclStmt(in, line);
-		}
-		else if (tok == COLON)
-		{
-			tok = Parser::GetNextToken(in, line);
-			if (tok != CCONST || !Type(in, line))
-			{
-				ParseError(line, "Not CCONST or Type");
-				return false;
-			}
-
-			tok = Parser::GetNextToken(in, line);
-		}
-		else
-		{
-			ParseError(line, "Missing colon");
-			return false;
-		}
-	}
-	else
+	if (tok != IDENT)
 	{
 		ParseError(line, "No IDENT");
 		return false;
 	}
+
+	while (true)
+	{
+		tok = Parser::GetNextToken(in, line);
+		if (tok == COMMA)
+		{
+			tok = Parser::GetNextToken(in, line);
+			if (tok != IDENT)
+			{
+				ParseError(line, "No IDENT");
+				return false;
+			}
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	if (tok != COLON)
+	{
+		ParseError(line, "Missing colon");
+		return false;
+	}
+
+	tok = Parser::GetNextToken(in, line);
 
 	return true;
 }
@@ -224,6 +221,15 @@ bool DeclStmt(istream &in, int &line)
 // Type ::= INTEGER | FLOAT | BOOLEAN | STRING | CHARACTER
 bool Type(istream &in, int &line)
 {
+	LexItem tok;
+
+	tok = Parser::GetNextToken(in, line);
+	if (tok != INT || tok != FLOAT || tok != BOOL || tok != STRING || tok != CHAR)
+	{
+		ParseError(line, "Incorrect Declaration Type.");
+		return false;
+	}
+
 	return true;
 }
 // End of Type
