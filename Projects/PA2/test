@@ -1,14 +1,14 @@
-procedure prog5 is
-	-- { Missing semicolon } 
+procedure prog1 is
+	-- { Testing incorrect type name } 
 	
 	x, y_1, w234: integer;	
 	str : string := "Welcome";
 	z : float;
-	flag, bing : boolean:= false ; 
+	flag , bing : bool:= false ; 
 	
 begin
 	get(x);
-	put("Value of x= "); put(x)
+	put("Value of x= "); put(x);
 	put("Value of z= ");
-	putln(z);
+	putline(z);
 END prog1;

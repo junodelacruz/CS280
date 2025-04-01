@@ -1,150 +1,7 @@
-/*
- * lex.cpp
- * Lexical Analyzer for the simple Ada-Like (SADAL) Language
- * CS280 - Spring 2025
- */
-
-#include <cctype>
-#include <map>
-
-using std::map;
-using namespace std;
-
 #include "lex.h"
-// Keywords or reserved words mapping
-LexItem id_or_kw(const string &lexeme, int linenum)
-{
-	string strlexeme = lexeme;
-	map<string, Token> kwmap = {
-		{"put", PUT},
-		{"putline", PUTLN},
-		{"get", GET},
-		{"if", IF},
-		{"elsif", ELSIF},
-		{"else", ELSE},
-		{"string", STRING},
-		{"integer", INT},
-		{"float", FLOAT},
-		{"character", CHAR},
-		{"boolean", BOOL},
-		{"procedure", PROCEDURE},
-		{"begin", BEGIN},
-		{"true", TRUE},
-		{"then", THEN},
-		{"constant", CONST},
-		{"false", FALSE},
-		{"is", IS},
-		{"end", END},
-		{"mod", MOD},
-		{"and", AND},
-		{"or", OR},
-		{"not", NOT},
-
-	};
-	Token tt;
-
-	for (int i = 0; i < lexeme.length(); i++)
-	{
-		strlexeme[i] = tolower(strlexeme[i]);
-	}
-
-	tt = IDENT;
-	auto kIt = kwmap.find(strlexeme);
-	if (kIt != kwmap.end())
-	{
-		tt = kIt->second;
-	}
-
-	if (tt == TRUE || tt == FALSE)
-		tt = BCONST;
-	return LexItem(tt, lexeme, linenum);
-}
-
-map<Token, string> tokenPrint = {
-	{PROCEDURE, "PROCEDURE"},
-	{PUT, "PUT"},
-	{PUTLN, "PUTLN"},
-	{GET, "GET"},
-	{IF, "IF"},
-	{ELSE, "ELSE"},
-	{ELSIF, "ELSIF"},
-	{IDENT, "IDENT"},
-	{BOOL, "BOOL"},
-	{STRING, "STRING"},
-	{INT, "INT"},
-	{FLOAT, "FLOAT"},
-	{CHAR, "CHAR"},
-	{END, "END"},
-	{IS, "IS"},
-	{BEGIN, "BEGIN"},
-	{THEN, "THEN"},
-	{CONST, "CONST"},
-	{TRUE, "TRUE"},
-	{FALSE, "FALSE"},
-
-	{ICONST, "ICONST"},
-	{FCONST, "FCONST"},
-	{SCONST, "SCONST"},
-	{BCONST, "BCONST"},
-	{CCONST, "CCONST"},
-
-	{PLUS, "PLUS"},
-	{MINUS, "MINUS"},
-	{MULT, "MULT"},
-	{DIV, "DIV"},
-	{ASSOP, "ASSOP"},
-	{EQ, "EQ"},
-	{NEQ, "NEQ"},
-	{GTHAN, "GTHAN"},
-	{LTHAN, "LTHAN"},
-	{GTE, "GTE"},
-	{LTE, "LTE"},
-	{AND, "AND"},
-	{OR, "OR"},
-	{NOT, "NOT"},
-	{MOD, "MOD"},
-	{CONCAT, "CONCAT"},
-	{EXP, "EXP"},
-
-	{COMMA, "COMMA"},
-	{COLON, "COLON"},
-	{SEMICOL, "SEMICOL"},
-	{LPAREN, "LPAREN"},
-	{RPAREN, "RPAREN"},
-	{DOT, "DOT"},
-
-	{ERR, "ERR"},
-	{DONE, "DONE"},
-};
-
-ostream &operator<<(ostream &out, const LexItem &tok)
-{
-
-	Token tt = tok.GetToken();
-	out << tokenPrint[tt];
-	if (tt == ICONST || tt == FCONST || tt == BCONST)
-	{
-		out << ": (" << tok.GetLexeme() << ")";
-	}
-	else if (tt == IDENT)
-	{
-		out << ": <" << tok.GetLexeme() << ">";
-	}
-	else if (tt == SCONST)
-	{
-		out << ": \"" << tok.GetLexeme() << "\"";
-	}
-	else if (tt == CCONST)
-	{
-		out << ": \'" << tok.GetLexeme() << "\'";
-	}
-	else if (tok == ERR)
-	{
-		cout << ": In line " << tok.GetLinenum() + 1 << ", Error Message {" << tok.GetLexeme() << "}" << endl;
-	}
-	cout << endl;
-	return out;
-}
+#include <unordered_map>
+#include <iostream>
+#include <algorithm>
 
 LexItem getNextToken(istream &in, int &linenum)
 {
@@ -152,346 +9,394 @@ LexItem getNextToken(istream &in, int &linenum)
 	{
 		START,
 		INID,
-		INSTR,
 		ININT,
-		INREAL,
-		INEXP,
-		INCHAR,
-		INCOMMENT
+		INSTRING,
+		INFLOAT,
+
 	} lexstate = START;
-	string lexeme, ErrMsg;
-	char ch, nextchar, nextch;
-	Token tt;
-	bool dec = false, intexp = false, floatexp = false;
+	string lexeme;
+	string line;
+	char ch;
+	unordered_map<char, Token> symbols = {
+		{'+', PLUS},
+		{'*', MULT},
+		{'/', DIV},
+		{'=', EQ},
+		{'<', LTHAN},
+		{'>', GTHAN},
+		{'&', CONCAT},
+		{',', COMMA},
+		{';', SEMICOL},
+		{'(', LPAREN},
+		{')', RPAREN},
+		{':', COLON},
+		{'.', DOT},
+	};
 
 	while (in.get(ch))
 	{
-
 		switch (lexstate)
 		{
 		case START:
-			if (ch == '\n')
-			{
-				linenum++;
-			}
-
 			if (isspace(ch))
+			{
+				if (ch == '\n')
+				{
+					linenum++;
+				}
 				continue;
-
-			if (isalpha(ch))
-			{
-				ch = tolower(ch);
-				lexeme = ch;
-				lexstate = INID;
 			}
-			else if (ch == '\'')
-			{
-				lexeme = "";
-
-				lexstate = INCHAR;
-			}
-			else if (ch == '\"')
-			{
-				lexeme = "";
-				lexstate = INSTR;
-			}
-
-			else if (isdigit(ch))
-			{
-				lexeme = ch;
-				lexstate = ININT;
-			}
-
 			else if (ch == '-')
 			{
-				nextchar = in.peek();
-
-				if (nextchar == '-')
+				if (in.peek() == '-')
 				{
-					in.get(ch);
-
-					lexstate = INCOMMENT;
-
-					continue;
+					getline(in, line);
+					linenum++;
+					break;
 				}
 				else
 				{
-					tt = MINUS;
-					lexeme = ch;
-					return LexItem(tt, lexeme, linenum);
+					return LexItem(MINUS, lexeme, linenum);
 				}
 			}
-
-			else
+			else if (isalpha(ch))
 			{
-				tt = ERR;
-				lexeme = ch;
-				switch (ch)
-				{
-				case '+':
-					tt = PLUS;
-					break;
-
-				case '*':
-					tt = MULT;
-					nextchar = in.peek();
-					if (nextchar == '*')
-					{
-						in.get(ch);
-						lexeme += ch;
-						tt = EXP;
-					}
-					break;
-
-				case '=':
-					tt = EQ;
-					break;
-				case '(':
-					tt = LPAREN;
-					break;
-				case ')':
-					tt = RPAREN;
-					break;
-				case ',':
-					tt = COMMA;
-					break;
-				case ';':
-					tt = SEMICOL;
-					break;
-				case '>':
-					tt = GTHAN;
-					nextchar = in.peek();
-					if (nextchar == '=')
-					{
-						in.get(ch);
-						lexeme += ch;
-						tt = GTE;
-					}
-					break;
-
-				case '<':
-					tt = LTHAN;
-					nextchar = in.peek();
-					if (nextchar == '=')
-					{
-						in.get(ch);
-						lexeme += ch;
-						tt = LTE;
-					}
-					break;
-				case '&':
-					tt = CONCAT;
-					break;
-				case ':':
-					tt = COLON;
-					nextchar = in.peek();
-					if (nextchar == '=')
-					{
-						in.get(ch);
-						lexeme += ch;
-						tt = ASSOP;
-					}
-					break;
-				case '/':
-					tt = DIV;
-					nextchar = in.peek();
-					if (nextchar == '=')
-					{
-						in.get(ch);
-						lexeme += ch;
-						tt = NEQ;
-					}
-					break;
-				case '.':
-					tt = DOT;
-					break;
-
-				} // end of inner switch
-				return LexItem(tt, lexeme, linenum);
-			} // end of else
-
-			break; // break out of START case
-
-		case INID:
-			ch = tolower(ch);
-			nextchar = in.peek();
-			if (isalpha(ch) || isdigit(ch) || (ch == '_'))
-			{
-
 				lexeme += ch;
-
-				if (ch == '_' && nextchar == '_')
+				lexstate = INID;
+			}
+			else if (isdigit(ch))
+			{
+				lexeme += ch;
+				lexstate = ININT;
+			}
+			else if (ch == '"' || ch == '\'')
+			{
+				lexeme += ch;
+				lexstate = INSTRING;
+			}
+			else if (ch == ':')
+			{
+				lexeme += ch;
+				if (in.peek() == '=')
 				{
-					return id_or_kw(lexeme, linenum);
+					lexeme += in.get();
+					return LexItem(ASSOP, lexeme, linenum);
 				}
+				else
+				{
+					return LexItem(COLON, lexeme, linenum);
+				}
+			}
+			else if (ch == '<')
+			{
+				lexeme += ch;
+				if (in.peek() == '=')
+				{
+					lexeme += in.get();
+					return LexItem(LTE, lexeme, linenum);
+				}
+				return LexItem(LTHAN, lexeme, linenum);
+			}
+			else if (ch == '>')
+			{
+				lexeme += ch;
+				if (in.peek() == '=')
+				{
+					lexeme += in.get();
+					return LexItem(GTE, lexeme, linenum);
+				}
+				return LexItem(GTHAN, lexeme, linenum);
+			}
+			else if (ch == '/')
+			{
+				lexeme += ch;
+				if (in.peek() == '=')
+				{
+					lexeme += in.get();
+					return LexItem(NEQ, lexeme, linenum);
+				}
+				return LexItem(DIV, lexeme, linenum);
+			}
+			else if (ch == '*')
+			{
+				lexeme += ch;
+				if (in.peek() == '*')
+				{
+					lexeme += in.get();
+					return LexItem(EXP, lexeme, linenum);
+				}
+				return LexItem(MULT, lexeme, linenum);
+			}
+			else if (symbols.count(ch))
+			{
+				lexeme += ch;
+				return LexItem(symbols[ch], lexeme, linenum);
 			}
 			else
 			{
-				in.putback(ch);
-
+				lexeme += ch;
+				return LexItem(ERR, lexeme, linenum);
+			}
+			break;
+		case INID:
+			if (isalnum(ch) || (ch == '_' && lexeme.back() != '_'))
+			{
+				lexeme += ch;
+			}
+			else
+			{
+				in.unget();
+				transform(lexeme.begin(), lexeme.end(), lexeme.begin(), ::tolower);
 				return id_or_kw(lexeme, linenum);
 			}
 			break;
-
-		case INCHAR:
-
-			if (ch == '\n')
-			{
-				ErrMsg = "New line is an invalid character constant.";
-				return LexItem(ERR, ErrMsg, linenum);
-			}
-			else if (ch == '\'' && lexeme.length() == 1)
-			{
-
-				return LexItem(CCONST, lexeme, linenum);
-			}
-			else if (lexeme.length() >= 1)
-			{
-				lexeme += ch;
-				return LexItem(ERR, " Invalid character constant \'" + lexeme + "\'", linenum);
-			}
-			else if (ch == '\'' && lexeme.length() == 0)
-			{
-				return LexItem(ERR, " Invalid character constant \'\'", linenum);
-			}
-			lexeme += ch;
-			break;
-
-		case INSTR:
-
-			if (ch == '\n')
-			{
-				return LexItem(ERR, " Invalid string constant \"" + lexeme, linenum);
-			}
-			if (ch == '\"')
-			{
-				return LexItem(SCONST, lexeme, linenum);
-			}
-			lexeme += ch;
-			break;
-
 		case ININT:
-			if (isdigit(ch))
+			// ICONST
+			if (isdigit(ch)) // digit?
 			{
 				lexeme += ch;
 			}
 			else if (ch == '.')
 			{
-				nextch = in.peek();
-				if (isdigit(nextch))
+				if (isdigit(in.peek()))
 				{
-
-					in.putback(ch);
-					lexstate = INREAL;
+					lexeme += ch;
+					lexstate = INFLOAT;
+					break;
 				}
-				else
+				in.unget();
+				return LexItem(ICONST, lexeme, linenum);
+			}
+			else if (ch == 'e' || ch == 'E') // E?
+			{
+				if (in.peek() == '+' || in.peek() == '-')
 				{
-					in.putback(ch);
+					lexeme += ch;
+					lexeme += in.get();
+					if (isdigit(in.peek()))
+					{
+						while (isdigit(in.peek()))
+						{
+							lexeme += in.get();
+						}
+						return LexItem(ICONST, lexeme, linenum);
+					}
+					else
+					{
+						in.unget();
+						return LexItem(ERR, lexeme, linenum);
+					}
+				}
+				else if (isdigit(in.peek()))
+				{
+					lexeme += ch;
+					while (isdigit(in.peek()))
+					{
+						lexeme += in.get();
+					}
 					return LexItem(ICONST, lexeme, linenum);
 				}
-			}
-			else if (ch == 'E' || ch == 'e')
-			{
-				nextch = in.peek();
-				if (nextch == '+' || nextch == '-' || isdigit(nextch))
+				else if (isspace(in.peek()))
 				{
-					lexeme += ch;
-					in.get(ch);
-					lexeme += ch;
-					intexp = true;
-					lexstate = INEXP;
+					in.unget();
+					lexstate = START;
+					break;
 				}
 				else
 				{
-					in.putback(ch);
+					in.unget();
 					return LexItem(ICONST, lexeme, linenum);
 				}
 			}
 			else
 			{
-				in.putback(ch);
+				in.unget();
 				return LexItem(ICONST, lexeme, linenum);
 			}
 			break;
-
-		case INREAL:
-
-			if (ch == '.' && isdigit(in.peek()) && !dec)
-			{
-				lexeme += ch;
-				in.get(ch);
-				lexeme += ch;
-				dec = true;
-			}
-			else if (isdigit(ch) && dec)
+		case INFLOAT:
+			// FCONST
+			if (isdigit(ch))
 			{
 				lexeme += ch;
 			}
-			else if ((ch == 'E' || ch == 'e') && dec)
+			else if (ch == 'e' || ch == 'E')
 			{
-				nextch = in.peek();
-				if (nextch == '+' || nextch == '-' || isdigit(nextch))
+				if (in.peek() == '+' || in.peek() == '-')
 				{
 					lexeme += ch;
-					in.get(ch);
+					lexeme += in.get();
+					if (isdigit(in.peek()))
+					{
+						while (isdigit(in.peek()))
+						{
+							lexeme += in.get();
+						}
+						return LexItem(FCONST, lexeme, linenum);
+					}
+					else
+					{
+						in.unget();
+						return LexItem(ERR, lexeme, linenum);
+					}
+				}
+				else if (isdigit(in.peek()))
+				{
 					lexeme += ch;
-					floatexp = true;
-					lexstate = INEXP;
+					while (isdigit(in.peek()))
+					{
+						lexeme += in.get();
+					}
+					return LexItem(FCONST, lexeme, linenum);
+				}
+				else if (isspace(in.peek()))
+				{
+					in.unget();
+					return LexItem(FCONST, lexeme, linenum);
 				}
 				else
 				{
-					in.putback(ch);
+					in.unget();
 					return LexItem(FCONST, lexeme, linenum);
 				}
 			}
-
-			else if ((ch == '.') && dec && isdigit(in.peek()))
+			else if (ch == '.')
 			{
 				lexeme += ch;
-
 				return LexItem(ERR, lexeme, linenum);
 			}
 			else
 			{
-				in.putback(ch);
-
+				in.unget();
 				return LexItem(FCONST, lexeme, linenum);
 			}
-
 			break;
-
-		case INEXP:
-			if (isdigit(ch) && (intexp || floatexp))
+		case INSTRING:
+			if (ch != '\n')
 			{
+				if (lexeme.at(0) == '\'' && lexeme.length() > 2)
+				{
+					return LexItem(ERR, " Invalid character constant " + lexeme + '\'', linenum);
+				}
+				if (ch == '"')
+				{
+					if (lexeme.at(0) == '"')
+					{
+						lexeme.erase(remove(lexeme.begin(), lexeme.end(), '"'), lexeme.end());
+						return LexItem(SCONST, lexeme, linenum);
+					}
+					else if (lexeme.at(0) == '\'')
+					{
+						return LexItem(ERR, " Invalid string constant " + lexeme + '"', linenum);
+					}
+					else
+					{
+						return LexItem(ERR, "New line is an invalid character constant.", linenum);
+					}
+				}
+				else if (ch == '\'')
+				{
+					if (lexeme.at(0) == '\'' && lexeme.length() == 2)
+					{
+						lexeme.erase(remove(lexeme.begin(), lexeme.end(), '\''), lexeme.end());
+						return LexItem(CCONST, lexeme, linenum);
+					}
+					else if (lexeme.at(0) == '"')
+					{
+						return LexItem(ERR, " Invalid string constant " + lexeme + '\'', linenum);
+					}
+					else
+					{
+						return LexItem(ERR, "New line is an invalid character constant.", linenum);
+					}
+				}
+				else if (in.peek() == '\n')
+				{
+					return LexItem(ERR, " Invalid string constant " + lexeme + ' ', linenum);
+				}
 				lexeme += ch;
 			}
-			else
-			{
-				in.putback(ch);
-				if (intexp)
-				{
-					return LexItem(ICONST, lexeme, linenum);
-				}
-				if (floatexp)
-				{
-					return LexItem(FCONST, lexeme, linenum);
-				}
-			}
-
-		case INCOMMENT:
-			if (ch == '\n')
-			{
-				lexstate = START;
-				linenum++;
-				// in.putback(ch);
-			}
 			break;
+		}
+	}
+	return LexItem(DONE, "", linenum);
+}
 
-		} // end of switch
-	} // end of while loop
+LexItem id_or_kw(const string &lexeme, int linenum)
+{
+	unordered_map<string, Token> reservedWords = {
+		{"procedure", PROCEDURE},
+		{"string", STRING},
+		{"else", ELSE},
+		{"if", IF},
+		{"integer", INT},
+		{"float", FLOAT},
+		{"character", CHAR},
+		{"put", PUT},
+		{"putline", PUTLN},
+		{"get", GET},
+		{"boolean", BOOL},
+		{"true", TRUE},
+		{"false", FALSE},
+		{"elsif", ELSIF},
+		{"is", IS},
+		{"end", END},
+		{"begin", BEGIN},
+		{"then", THEN},
+		{"constant", CONST},
+		{"mod", MOD},
+		{"and", AND},
+		{"or", OR},
+		{"not", NOT}};
 
-	if (in.eof())
-		return LexItem(DONE, "", linenum);
+	auto it = reservedWords.find(lexeme);
+	if (it != reservedWords.end())
+	{
+		if (it->second == TRUE || it->second == FALSE)
+		{
+			return LexItem(BCONST, lexeme, linenum);
+		}
+		return LexItem(it->second, lexeme, linenum);
+	}
+	return LexItem(IDENT, lexeme, linenum);
+}
 
-	return LexItem(ERR, "Error: Some strange symbol", linenum);
+ostream &operator<<(ostream &out, const LexItem &tok)
+{
+	map<Token, string> tokenToString = {
+		{IF, "IF"}, {ELSE, "ELSE"}, {ELSIF, "ELSIF"}, {PUT, "PUT"}, {PUTLN, "PUTLN"}, {GET, "GET"}, {INT, "INT"}, {FLOAT, "FLOAT"}, {CHAR, "CHAR"}, {STRING, "STRING"}, {BOOL, "BOOL"}, {PROCEDURE, "PROCEDURE"}, {TRUE, "TRUE"}, {FALSE, "FALSE"}, {END, "END"}, {IS, "IS"}, {BEGIN, "BEGIN"}, {THEN, "THEN"}, {CONST, "CONST"}, {IDENT, "IDENT"}, {ICONST, "ICONST"}, {FCONST, "FCONST"}, {SCONST, "SCONST"}, {BCONST, "BCONST"}, {CCONST, "CCONST"}, {PLUS, "PLUS"}, {MINUS, "MINUS"}, {MULT, "MULT"}, {DIV, "DIV"}, {ASSOP, "ASSOP"}, {EQ, "EQ"}, {NEQ, "NEQ"}, {EXP, "EXP"}, {CONCAT, "CONCAT"}, {GTHAN, "GTHAN"}, {LTHAN, "LTHAN"}, {LTE, "LTE"}, {GTE, "GTE"}, {AND, "AND"}, {OR, "OR"}, {NOT, "NOT"}, {MOD, "MOD"}, {COMMA, "COMMA"}, {SEMICOL, "SEMICOL"}, {LPAREN, "LPAREN"}, {RPAREN, "RPAREN"}, {DOT, "DOT"}, {COLON, "COLON"}, {ERR, "ERR"}, {DONE, "DONE"}};
+
+	if (tok == ICONST)
+	{
+		out << "ICONST: (" << tok.GetLexeme() << ')';
+	}
+	else if (tok == BCONST)
+	{
+		out << "BCONST: (" << tok.GetLexeme() << ')';
+	}
+	else if (tok == FCONST)
+	{
+		out << "FCONST: (" << tok.GetLexeme() << ')';
+	}
+	else if (tok == IDENT)
+	{
+		out << "IDENT: <" << tok.GetLexeme() << '>';
+	}
+	else if (tok == SCONST)
+	{
+		out << "SCONST: \"" << tok.GetLexeme() << '"';
+	}
+	else if (tok == CCONST)
+	{
+		out << "CCONST: \'" << tok.GetLexeme() << '\'';
+	}
+	else if (tok == ERR)
+	{
+		out << "ERR: In line " << tok.GetLinenum() << ", Error Message {" << tok.GetLexeme() << "}";
+	}
+	else
+	{
+		out << tokenToString[tok.GetToken()];
+	}
+	return out;
 }

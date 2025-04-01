@@ -55,13 +55,13 @@ bool Prog(istream &in, int &line)
 	LexItem tok;
 
 	tok = Parser::GetNextToken(in, line);
-
-	if (tok.GetToken() != PROCEDURE)
+	if (tok != PROCEDURE)
 	{
 		ParseError(line, "Missing Procedure Name.");
 		return false;
 	}
 
+	tok = Parser::GetNextToken(in, line);
 	if (!ProcName(in, line))
 	{
 		ParseError(line, "Error no procname");
@@ -69,12 +69,13 @@ bool Prog(istream &in, int &line)
 	}
 
 	tok = Parser::GetNextToken(in, line);
-	if (tok.GetToken() != IS)
+	if (tok != IS)
 	{
 		ParseError(line, "Missing 'IS'");
 		return false;
 	}
 
+	tok = Parser::GetNextToken(in, line);
 	if (!ProcBody(in, line))
 	{
 		ParseError(line, "Invalid procedure body");
@@ -86,8 +87,52 @@ bool Prog(istream &in, int &line)
 // End of Prog
 
 // ProcBody ::= DeclPart BEGIN StmtList END ProcName ;
-bool ProgBody(istream &in, int &line)
+bool ProcBody(istream &in, int &line)
 {
+	LexItem tok;
+
+	tok = Parser::GetNextToken(in, line);
+	if (!DeclPart)
+	{
+		ParseError(line, "No DeclPart");
+		return false;
+	}
+
+	tok = Parser::GetNextToken(in, line);
+	if (tok != BEGIN)
+	{
+		ParseError(line, "No BEGIN");
+		return false;
+	}
+
+	tok = Parser::GetNextToken(in, line);
+	if (!StmtList)
+	{
+		ParseError(line, "No StmtList");
+		return false;
+	}
+
+	tok = Parser::GetNextToken(in, line);
+	if (tok != END)
+	{
+		ParseError(line, "No END");
+		return false;
+	}
+
+	tok = Parser::GetNextToken(in, line);
+	if (!ProcName)
+	{
+		ParseError(line, "No ProcName");
+		return false;
+	}
+
+	tok = Parser::GetNextToken(in, line);
+	if (tok != SEMICOL)
+	{
+		ParseError(line, "Missing semicolon at end of statement");
+		return false;
+	}
+
 	return true;
 }
 // End of ProcBody
@@ -95,6 +140,14 @@ bool ProgBody(istream &in, int &line)
 // ProcName ::= IDENT
 bool ProcName(istream &in, int &line)
 {
+	LexItem tok;
+
+	tok = Parser::GetNextToken(in, line);
+	if (tok != IDENT)
+	{
+		ParseError(line, "Missing IDENT");
+		return false;
+	}
 	return true;
 }
 // End of ProcName
@@ -131,6 +184,32 @@ bool DeclPart(istream &in, int &line)
 // DeclStmt ::= IDENT {, IDENT } : [CONSTANT] Type [(Range)] [:= Expr] ;
 bool DeclStmt(istream &in, int &line)
 {
+	LexItem tok;
+
+	tok = Parser::GetNextToken(in, line);
+	if (tok == IDENT)
+	{
+		tok = Parser::GetNextToken(in, line);
+		if (tok == COMMA)
+		{
+			DeclStmt(in, line);
+		}
+		else if (tok == COLON)
+		{
+			tok = Parser::GetNextToken(in, line);
+			// start here
+		}
+		else
+		{
+			ParseError(line, "Missing colon");
+			return false;
+		}
+	}
+	else
+	{
+		return false;
+	}
+
 	return true;
 }
 // End of DeclStmt
@@ -237,21 +316,21 @@ bool STerm(istream &in, int &line)
 // End of STerm
 
 // Term ::= Factor { ( * | / | MOD ) Factor }
-bool Term(istream &in, int &line)
+bool Term(istream &in, int &line, int &sign)
 {
 	return true;
 }
 // End of Term
 
 // Factor ::= Primary [** [(+ | -)] Primary ] | NOT Primary
-bool Factor(istream &in, int &line)
+bool Factor(istream &in, int &line, int &sign)
 {
 	return true;
 }
 // End of Factor
 
 // Primary ::= Name | ICONST | FCONST | SCONST | BCONST | CCONST | (Expr)
-bool Primary(istream &in, int &line)
+bool Primary(istream &in, int &line, int &sign)
 {
 	return true;
 }
