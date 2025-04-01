@@ -197,7 +197,13 @@ bool DeclStmt(istream &in, int &line)
 		else if (tok == COLON)
 		{
 			tok = Parser::GetNextToken(in, line);
-			// start here
+			if (tok != CCONST || !Type(in, line))
+			{
+				ParseError(line, "Not CCONST or Type");
+				return false;
+			}
+
+			tok = Parser::GetNextToken(in, line);
 		}
 		else
 		{
@@ -207,6 +213,7 @@ bool DeclStmt(istream &in, int &line)
 	}
 	else
 	{
+		ParseError(line, "No IDENT");
 		return false;
 	}
 
