@@ -826,6 +826,9 @@ bool Primary(istream &in, int &line, int sign)
 // Name ::= IDENT [ ( Range ) ]
 bool Name(istream &in, int &line)
 {
+
+	// undefined variable thing: use find method for defvar and check if it is not in the map, if not return false because
+	// not defined
 	LexItem tok;
 
 	tok = Parser::GetNextToken(in, line);
