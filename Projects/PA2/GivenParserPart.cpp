@@ -57,13 +57,12 @@ bool Prog(istream &in, int &line)
 	tok = Parser::GetNextToken(in, line);
 	if (tok != PROCEDURE)
 	{
-		ParseError(line, "Missing Procedure Name.");
+		ParseError(line, "Incorrect compilation file.");
 		return false;
 	}
 
 	if (!ProcName(in, line))
 	{
-		ParseError(line, "Error no procname");
 		return false;
 	}
 
@@ -76,7 +75,7 @@ bool Prog(istream &in, int &line)
 
 	if (!ProcBody(in, line))
 	{
-		ParseError(line, "Invalid procedure body");
+		ParseError(line, "Incorrect Procedure Definition.");
 		return false;
 	}
 
@@ -89,46 +88,30 @@ bool ProcBody(istream &in, int &line)
 {
 	LexItem tok;
 
-	if (!DeclPart(in, line))
+	if (DeclPart(in, line))
 	{
-		ParseError(line, "No DeclPart");
-		return false;
+		tok = Parser::GetNextToken(in, line);
+		if (tok == BEGIN)
+		{
+			if (StmtList(in, line))
+			{
+				tok = Parser::GetNextToken(in, line);
+				if (tok == END)
+				{
+					if (ProcName(in, line))
+					{
+						tok = Parser::GetNextToken(in, line);
+						if (tok == SEMICOL)
+						{
+							return true;
+						}
+					}
+				}
+			}
+		}
 	}
-
-	tok = Parser::GetNextToken(in, line);
-	if (tok != BEGIN)
-	{
-		ParseError(line, "No BEGIN");
-		return false;
-	}
-
-	if (!StmtList(in, line))
-	{
-		ParseError(line, "No StmtList");
-		return false;
-	}
-
-	tok = Parser::GetNextToken(in, line);
-	if (tok != END)
-	{
-		ParseError(line, "No END");
-		return false;
-	}
-
-	if (!ProcName(in, line))
-	{
-		ParseError(line, "No ProcName");
-		return false;
-	}
-
-	tok = Parser::GetNextToken(in, line);
-	if (tok != SEMICOL)
-	{
-		ParseError(line, "Missing semicolon at end of statement");
-		return false;
-	}
-
-	return true;
+	ParseError(line, "Incorrect procedure body.");
+	return false;
 }
 // End of ProcBody
 
@@ -140,7 +123,7 @@ bool ProcName(istream &in, int &line)
 	tok = Parser::GetNextToken(in, line);
 	if (tok != IDENT)
 	{
-		ParseError(line, "Missing IDENT");
+		ParseError(line, "Missing Procedure Name.");
 		return false;
 	}
 	return true;
@@ -188,6 +171,18 @@ bool DeclStmt(istream &in, int &line)
 		return false;
 	}
 
+	if (defVar.find(tok.GetLexeme()) == defVar.end())
+	{
+		defVar.insert({tok.GetLexeme(), true});
+	}
+	else
+	{
+		ParseError(line, "Variable Redefinition");
+		ParseError(line, "Incorrect identifiers list in Declaration Statement.");
+		defVar[tok.GetLexeme()] = false;
+		return false;
+	}
+
 	while (true)
 	{
 		tok = Parser::GetNextToken(in, line);
@@ -199,10 +194,27 @@ bool DeclStmt(istream &in, int &line)
 				ParseError(line, "No IDENT");
 				return false;
 			}
+			if (defVar.find(tok.GetLexeme()) == defVar.end())
+			{
+				defVar.insert({tok.GetLexeme(), true});
+			}
+			else
+			{
+				ParseError(line, "Variable Redefinition");
+				ParseError(line, "Incorrect identifiers list in Declaration Statement.");
+				defVar[tok.GetLexeme()] = false;
+				return false;
+			}
 		}
 		else
 		{
-			break;
+			if (tok == COLON)
+			{
+				break;
+			}
+			ParseError(line, "Missing comma in declaration statement.");
+			ParseError(line, "Incorrect identifiers list in Declaration Statement.");
+			return false;
 		}
 	}
 
@@ -220,7 +232,6 @@ bool DeclStmt(istream &in, int &line)
 
 	if (!Type(in, line))
 	{
-		ParseError(line, "Missing Type in DeclStmt");
 		return false;
 	}
 
@@ -248,6 +259,7 @@ bool DeclStmt(istream &in, int &line)
 			ParseError(line, "Invalid EXPR in DeclStmt");
 			return false;
 		}
+		tok = Parser::GetNextToken(in, line);
 	}
 
 	if (tok != SEMICOL)
@@ -303,13 +315,47 @@ bool StmtList(istream &in, int &line)
 // Stmt ::= AssignStmt | PrintStmts | GetStmt | IfStmt
 bool Stmt(istream &in, int &line)
 {
-	if (AssignStmt(in, line) || PrintStmts(in, line) || GetStmt(in, line) || IfStmt(in, line))
+	LexItem tok;
+
+	tok = Parser::GetNextToken(in, line);
+	if (tok == GET)
 	{
-		return true;
+		Parser::PushBackToken(tok);
+		if (!GetStmt(in, line))
+		{
+			ParseError(line, "Invalid get statement.");
+			return false;
+		}
+	}
+	else if (tok == PUT || tok == PUTLN)
+	{
+		Parser::PushBackToken(tok);
+		if (!PrintStmts(in, line))
+		{
+			ParseError(line, "Invalid put statement.");
+			return false;
+		}
+	}
+	else if (tok == IF)
+	{
+		Parser::PushBackToken(tok);
+		if (!IfStmt(in, line))
+		{
+			ParseError(line, "Invalid if statement.");
+			return false;
+		}
+	}
+	else
+	{
+		Parser::PushBackToken(tok);
+		if (!AssignStmt(in, line))
+		{
+			ParseError(line, "Invalid assignment statement.");
+			return false;
+		}
 	}
 
-	ParseError(line, "invalid stmts in stmt");
-	return false;
+	return true;
 }
 // End of Stmt
 
@@ -319,33 +365,41 @@ bool PrintStmts(istream &in, int &line)
 	LexItem tok;
 
 	tok = Parser::GetNextToken(in, line);
-	if (tok.GetLexeme() != "PutLine" || tok.GetLexeme() != "Put")
+	if (tok == PUT || tok == PUTLN)
 	{
-		ParseError(line, "No putline in printstmt");
-		return false;
-	}
+		tok = Parser::GetNextToken(in, line);
+		if (tok != LPAREN)
+		{
+			Parser::PushBackToken(tok);
+			ParseError(line, "Missing Left Parenthesis");
+			return false;
+		}
 
-	tok = Parser::GetNextToken(in, line);
-	if (tok != LPAREN)
-	{
-		ParseError(line, "Missing Lparen in printstmt");
-		return false;
-	}
+		if (!Expr(in, line))
+		{
+			Parser::PushBackToken(tok);
+			return false;
+		}
 
-	if (!Expr(in, line))
-	{
-		ParseError(line, "Missing expr in printstmt");
-		return false;
-	}
+		tok = Parser::GetNextToken(in, line);
+		if (tok != RPAREN)
+		{
+			Parser::PushBackToken(tok);
+			ParseError(line, "Missing Right Parenthesis");
+			return false;
+		}
 
-	tok = Parser::GetNextToken(in, line);
-	if (tok != RPAREN)
-	{
-		ParseError(line, "Missing Rparen in printstmt");
-		return false;
+		tok = Parser::GetNextToken(in, line);
+		if (tok != SEMICOL)
+		{
+			Parser::PushBackToken(tok);
+			ParseError(line, "Missing semicolon at end of statement");
+			return false;
+		}
+		return true;
 	}
-
-	return true;
+	Parser::PushBackToken(tok);
+	return false;
 }
 // End of PrintStmts
 
@@ -355,32 +409,34 @@ bool GetStmt(istream &in, int &line)
 	LexItem tok;
 
 	tok = Parser::GetNextToken(in, line);
-	if (tok.GetLexeme() != "Get")
+	if (tok != GET)
 	{
-		ParseError(line, "Missing Get in getstmt");
 		return false;
 	}
 
 	tok = Parser::GetNextToken(in, line);
 	if (tok != LPAREN)
 	{
-		ParseError(line, "Missing LPAREN in getstmt");
 		return false;
 	}
 
 	if (!Var(in, line))
 	{
-		ParseError(line, "Missing Var in getstmt");
 		return false;
 	}
 
 	tok = Parser::GetNextToken(in, line);
 	if (tok != RPAREN)
 	{
-		ParseError(line, "Missing RPAREN in getstmt");
 		return false;
 	}
 
+	tok = Parser::GetNextToken(in, line);
+	if (tok != SEMICOL)
+	{
+		ParseError(line, "Missing semicolon at end of statement");
+		return false;
+	}
 	return true;
 }
 // End of GetStmt
@@ -393,26 +449,22 @@ bool IfStmt(istream &in, int &line)
 	tok = Parser::GetNextToken(in, line);
 	if (tok != IF)
 	{
-		ParseError(line, "Missing IF in Ifstmt");
 		return false;
 	}
 
 	if (!Expr(in, line))
 	{
-		ParseError(line, "Missing EXPR in Ifstmt");
 		return false;
 	}
 
 	tok = Parser::GetNextToken(in, line);
 	if (tok != THEN)
 	{
-		ParseError(line, "Missing THEN in Ifstmt");
 		return false;
 	}
 
 	if (!StmtList(in, line))
 	{
-		ParseError(line, "Missing StmtList in Ifstmt");
 		return false;
 	}
 
@@ -423,20 +475,17 @@ bool IfStmt(istream &in, int &line)
 		{
 			if (!Expr(in, line))
 			{
-				ParseError(line, "Missing EXPR in Ifstmt");
 				return false;
 			}
 
 			tok = Parser::GetNextToken(in, line);
 			if (tok != THEN)
 			{
-				ParseError(line, "Missing THEN in Ifstmt");
 				return false;
 			}
 
 			if (!StmtList(in, line))
 			{
-				ParseError(line, "Missing StmtList in Ifstmt");
 				return false;
 			}
 		}
@@ -450,28 +499,25 @@ bool IfStmt(istream &in, int &line)
 	{
 		if (!StmtList(in, line))
 		{
-			ParseError(line, "missing stmtlist after ELSE in ifstmt");
 			return false;
 		}
 	}
 
 	if (tok != END)
 	{
-		ParseError(line, "Missing END in ifstmt");
 		return false;
 	}
 
 	tok = Parser::GetNextToken(in, line);
 	if (tok != IF)
 	{
-		ParseError(line, "Missing IF in ifstmt");
 		return false;
 	}
 
 	tok = Parser::GetNextToken(in, line);
 	if (tok != SEMICOL)
 	{
-		ParseError(line, "Missing semicol in ifstmt");
+		ParseError(line, "Missing semicolon at end of statement");
 		return false;
 	}
 
@@ -486,27 +532,25 @@ bool AssignStmt(istream &in, int &line)
 
 	if (!Var(in, line))
 	{
-		ParseError(line, "Missing Var in AssignStmt");
 		return false;
 	}
 
 	tok = Parser::GetNextToken(in, line);
 	if (tok != ASSOP)
 	{
-		ParseError(line, "Missing Assop in AssignStmt");
 		return false;
 	}
 
 	if (!Expr(in, line))
 	{
-		ParseError(line, "Missing Expr in AssignStmt");
+		ParseError(line, "Missing Expression in Assignment Statement");
 		return false;
 	}
 
 	tok = Parser::GetNextToken(in, line);
 	if (tok != SEMICOL)
 	{
-		ParseError(line, "Missing semicol in AssignStmt");
+		ParseError(line, "Missing semicolon at end of statement");
 		return false;
 	}
 
@@ -522,10 +566,9 @@ bool Var(istream &in, int &line)
 	tok = Parser::GetNextToken(in, line);
 	if (tok != IDENT)
 	{
-		ParseError(line, "Invalid IDENT in Var");
+		Parser::PushBackToken(tok);
 		return false;
 	}
-
 	return true;
 }
 // End of Var
@@ -554,6 +597,7 @@ bool Expr(istream &in, int &line)
 		}
 		else
 		{
+			Parser::PushBackToken(tok);
 			break;
 		}
 	}
@@ -582,6 +626,8 @@ bool Relation(istream &in, int &line)
 			return false;
 		}
 	}
+
+	Parser::PushBackToken(tok);
 	return true;
 }
 // End of Relation
@@ -593,7 +639,7 @@ bool SimpleExpr(istream &in, int &line)
 
 	if (!STerm(in, line))
 	{
-		ParseError(line, "Missing STerm in SimpleExpr");
+		ParseError(line, "Missing operand");
 		return false;
 	}
 
@@ -604,12 +650,13 @@ bool SimpleExpr(istream &in, int &line)
 		{
 			if (!STerm(in, line))
 			{
-				ParseError(line, "Missing STerm after operator in SimpleExpr");
+				ParseError(line, "Missing operand after operator");
 				return false;
 			}
 		}
 		else
 		{
+			Parser::PushBackToken(tok);
 			break;
 		}
 	}
@@ -676,6 +723,7 @@ bool Term(istream &in, int &line, int sign)
 		}
 		else
 		{
+			Parser::PushBackToken(tok);
 			break;
 		}
 	}
@@ -692,6 +740,7 @@ bool Factor(istream &in, int &line, int sign)
 	tok = Parser::GetNextToken(in, line);
 	if (tok == NOT)
 	{
+		Parser::PushBackToken(tok);
 		if (!Primary(in, line, sign))
 		{
 			ParseError(line, "Missing Primary in Factor");
@@ -699,10 +748,14 @@ bool Factor(istream &in, int &line, int sign)
 		}
 		return true;
 	}
-	else if (!Primary(in, line, sign))
+	else
 	{
-		ParseError(line, "Missing Primary in Factor");
-		return false;
+		Parser::PushBackToken(tok);
+		if (!Primary(in, line, sign))
+		{
+			ParseError(line, "Missing Primary in Factor");
+			return false;
+		}
 	}
 
 	tok = Parser::GetNextToken(in, line);
@@ -725,6 +778,8 @@ bool Factor(istream &in, int &line, int sign)
 			return false;
 		}
 	}
+
+	Parser::PushBackToken(tok);
 	return true;
 }
 // End of Factor
@@ -774,7 +829,6 @@ bool Name(istream &in, int &line)
 	LexItem tok;
 
 	tok = Parser::GetNextToken(in, line);
-
 	if (tok != IDENT)
 	{
 		ParseError(line, "Missing IDENT in Name");
