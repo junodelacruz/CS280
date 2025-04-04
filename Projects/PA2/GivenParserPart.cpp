@@ -28,6 +28,7 @@ namespace Parser
 	{
 		if (pushed_back)
 		{
+			// cout << t;
 			abort();
 		}
 		pushed_back = true;
@@ -61,6 +62,20 @@ bool Prog(istream &in, int &line)
 		return false;
 	}
 
+	tok = Parser::GetNextToken(in, line);
+	if (defVar.find(tok.GetLexeme()) == defVar.end())
+	{
+		defVar.insert({tok.GetLexeme(), true});
+	}
+	else
+	{
+		ParseError(line, "Variable Redefinition");
+		ParseError(line, "Incorrect identifiers list in Declaration Statement.");
+		defVar[tok.GetLexeme()] = false;
+		return false;
+	}
+
+	Parser::PushBackToken(tok);
 	if (!ProcName(in, line))
 	{
 		return false;
@@ -79,6 +94,20 @@ bool Prog(istream &in, int &line)
 		return false;
 	}
 
+	int count = 0;
+	cout << "Declared Variables:" << endl;
+	for (auto elem : defVar)
+	{
+		count++;
+		cout << elem.first;
+		if (count != defVar.size())
+		{
+			cout << ", ";
+		}
+	}
+	cout << endl
+		 << endl;
+	cout << "(DONE)" << endl;
 	return true;
 }
 // End of Prog
@@ -121,6 +150,7 @@ bool ProcName(istream &in, int &line)
 	LexItem tok;
 
 	tok = Parser::GetNextToken(in, line);
+
 	if (tok != IDENT)
 	{
 		ParseError(line, "Missing Procedure Name.");
@@ -250,6 +280,7 @@ bool DeclStmt(istream &in, int &line)
 			ParseError(line, "Missing paren for range");
 			return false;
 		}
+		tok = Parser::GetNextToken(in, line);
 	}
 
 	if (tok == ASSOP)
@@ -370,21 +401,18 @@ bool PrintStmts(istream &in, int &line)
 		tok = Parser::GetNextToken(in, line);
 		if (tok != LPAREN)
 		{
-			Parser::PushBackToken(tok);
 			ParseError(line, "Missing Left Parenthesis");
 			return false;
 		}
 
 		if (!Expr(in, line))
 		{
-			Parser::PushBackToken(tok);
 			return false;
 		}
 
 		tok = Parser::GetNextToken(in, line);
 		if (tok != RPAREN)
 		{
-			Parser::PushBackToken(tok);
 			ParseError(line, "Missing Right Parenthesis");
 			return false;
 		}
@@ -392,13 +420,12 @@ bool PrintStmts(istream &in, int &line)
 		tok = Parser::GetNextToken(in, line);
 		if (tok != SEMICOL)
 		{
-			Parser::PushBackToken(tok);
+			line--;
 			ParseError(line, "Missing semicolon at end of statement");
 			return false;
 		}
 		return true;
 	}
-	Parser::PushBackToken(tok);
 	return false;
 }
 // End of PrintStmts
@@ -454,12 +481,14 @@ bool IfStmt(istream &in, int &line)
 
 	if (!Expr(in, line))
 	{
+		ParseError(line, "Invalid if statement condition");
 		return false;
 	}
 
 	tok = Parser::GetNextToken(in, line);
 	if (tok != THEN)
 	{
+		ParseError(line, "Missing Statement for If-Stmt Then-clause");
 		return false;
 	}
 
@@ -481,6 +510,7 @@ bool IfStmt(istream &in, int &line)
 			tok = Parser::GetNextToken(in, line);
 			if (tok != THEN)
 			{
+				ParseError(line, "Missing Statement for If-Stmt Then-clause");
 				return false;
 			}
 
@@ -501,16 +531,19 @@ bool IfStmt(istream &in, int &line)
 		{
 			return false;
 		}
+		tok = Parser::GetNextToken(in, line);
 	}
 
 	if (tok != END)
 	{
+		ParseError(line, "Missing closing END IF for IF-statement.");
 		return false;
 	}
 
 	tok = Parser::GetNextToken(in, line);
 	if (tok != IF)
 	{
+		ParseError(line, "Missing closing END IF for IF-statement.");
 		return false;
 	}
 
@@ -538,6 +571,7 @@ bool AssignStmt(istream &in, int &line)
 	tok = Parser::GetNextToken(in, line);
 	if (tok != ASSOP)
 	{
+		ParseError(line, "Missing Assignment Operator");
 		return false;
 	}
 
@@ -561,6 +595,8 @@ bool AssignStmt(istream &in, int &line)
 // Var ::= IDENT
 bool Var(istream &in, int &line)
 {
+
+	// maybe add undefined reference thing here for variables
 	LexItem tok;
 
 	tok = Parser::GetNextToken(in, line);
@@ -569,6 +605,7 @@ bool Var(istream &in, int &line)
 		Parser::PushBackToken(tok);
 		return false;
 	}
+
 	return true;
 }
 // End of Var
@@ -580,7 +617,6 @@ bool Expr(istream &in, int &line)
 
 	if (!Relation(in, line))
 	{
-		ParseError(line, "Missing relation in Expr");
 		return false;
 	}
 
@@ -591,7 +627,6 @@ bool Expr(istream &in, int &line)
 		{
 			if (!Relation(in, line))
 			{
-				ParseError(line, "Missing relation in Expr");
 				return false;
 			}
 		}
@@ -610,10 +645,8 @@ bool Expr(istream &in, int &line)
 bool Relation(istream &in, int &line)
 {
 	LexItem tok;
-
 	if (!SimpleExpr(in, line))
 	{
-		ParseError(line, "Missing simpleexpr in relation");
 		return false;
 	}
 
@@ -622,9 +655,9 @@ bool Relation(istream &in, int &line)
 	{
 		if (!SimpleExpr(in, line))
 		{
-			ParseError(line, "Missing SimpleExpr after operator in Relation");
 			return false;
 		}
+		return true;
 	}
 
 	Parser::PushBackToken(tok);
@@ -639,7 +672,6 @@ bool SimpleExpr(istream &in, int &line)
 
 	if (!STerm(in, line))
 	{
-		ParseError(line, "Missing operand");
 		return false;
 	}
 
@@ -683,18 +715,16 @@ bool STerm(istream &in, int &line)
 	{
 		if (!Term(in, line, sign))
 		{
-			ParseError(line, "Missing Term after operator in STerm");
 			return false;
 		}
+		return true;
 	}
 
 	Parser::PushBackToken(tok);
 	if (!Term(in, line, sign))
 	{
-		ParseError(line, "Missing Term after operator in STerm");
 		return false;
 	}
-
 	return true;
 }
 // End of STerm
@@ -706,7 +736,6 @@ bool Term(istream &in, int &line, int sign)
 
 	if (!Factor(in, line, sign))
 	{
-		ParseError(line, "Missing Factor in Term");
 		return false;
 	}
 
@@ -717,7 +746,7 @@ bool Term(istream &in, int &line, int sign)
 		{
 			if (!Factor(in, line, sign))
 			{
-				ParseError(line, "Missing Factor in Term");
+				ParseError(line, "Missing operand after operator");
 				return false;
 			}
 		}
@@ -727,7 +756,6 @@ bool Term(istream &in, int &line, int sign)
 			break;
 		}
 	}
-
 	return true;
 }
 // End of Term
@@ -743,7 +771,7 @@ bool Factor(istream &in, int &line, int sign)
 		Parser::PushBackToken(tok);
 		if (!Primary(in, line, sign))
 		{
-			ParseError(line, "Missing Primary in Factor");
+			ParseError(line, "Incorrect operand");
 			return false;
 		}
 		return true;
@@ -753,7 +781,7 @@ bool Factor(istream &in, int &line, int sign)
 		Parser::PushBackToken(tok);
 		if (!Primary(in, line, sign))
 		{
-			ParseError(line, "Missing Primary in Factor");
+			ParseError(line, "Incorrect operand");
 			return false;
 		}
 	}
@@ -766,15 +794,16 @@ bool Factor(istream &in, int &line, int sign)
 		{
 			if (!Primary(in, line, sign))
 			{
-				ParseError(line, "Missing primary after operator in Factor");
+				ParseError(line, "Incorrect operand");
 				return false;
 			}
+			return true;
 		}
 
 		Parser::PushBackToken(tok);
 		if (!Primary(in, line, sign))
 		{
-			ParseError(line, "Missing primary after operator in Factor");
+			ParseError(line, "Incorrect operand");
 			return false;
 		}
 	}
@@ -788,23 +817,21 @@ bool Factor(istream &in, int &line, int sign)
 bool Primary(istream &in, int &line, int sign)
 {
 	LexItem tok;
-
 	tok = Parser::GetNextToken(in, line);
 	if (tok == ICONST || tok == FCONST || tok == SCONST || tok == BCONST || tok == CCONST || tok == LPAREN)
 	{
 		if (tok == LPAREN)
 		{
-			Parser::PushBackToken(tok);
 			if (!Expr(in, line))
 			{
-				ParseError(line, "Invalid Expr in Primary");
+				ParseError(line, "Invalid Expression");
 				return false;
 			}
 
 			tok = Parser::GetNextToken(in, line);
 			if (tok != RPAREN)
 			{
-				ParseError(line, "Missing RPAREN after expr in primary");
+				ParseError(line, "Missing right parenthesis after expression");
 				return false;
 			}
 		}
@@ -818,7 +845,7 @@ bool Primary(istream &in, int &line, int sign)
 			return true;
 		}
 	}
-
+	ParseError(line, "Invalid reference to a variable.");
 	return false;
 }
 // End of Primary
@@ -826,12 +853,15 @@ bool Primary(istream &in, int &line, int sign)
 // Name ::= IDENT [ ( Range ) ]
 bool Name(istream &in, int &line)
 {
-
-	// undefined variable thing: use find method for defvar and check if it is not in the map, if not return false because
-	// not defined
 	LexItem tok;
 
 	tok = Parser::GetNextToken(in, line);
+	if (defVar.find(tok.GetLexeme()) == defVar.end())
+	{
+		ParseError(line, "Using Undefined Variable");
+		return false;
+	}
+
 	if (tok != IDENT)
 	{
 		ParseError(line, "Missing IDENT in Name");
@@ -853,6 +883,8 @@ bool Name(istream &in, int &line)
 			ParseError(line, "Missing RPAREN after range in Name");
 			return false;
 		}
+
+		return true;
 	}
 
 	Parser::PushBackToken(tok);
@@ -867,7 +899,6 @@ bool Range(istream &in, int &line)
 
 	if (!SimpleExpr(in, line))
 	{
-		ParseError(line, "Missing SimpleExpr in range");
 		return false;
 	}
 
@@ -877,17 +908,16 @@ bool Range(istream &in, int &line)
 		tok = Parser::GetNextToken(in, line);
 		if (tok != DOT)
 		{
-			ParseError(line, "Missing dot after dot in range");
 			return false;
 		}
 
 		if (!SimpleExpr(in, line))
 		{
-			ParseError(line, "Missing SimpleExpr in range");
 			return false;
 		}
+		return true;
 	}
-
+	Parser::PushBackToken(tok);
 	return true;
 }
 // End of Range
